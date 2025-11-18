@@ -35,6 +35,9 @@ public:
     size_t getEntryCount() const;
     void clearAllEntries();
     bool isMasterPasswordSet() const;
+    //проверяет принадлежит ли файл текущему мастер-паролю
+    bool canAccessFile(const std::string& filename) const;
+
 };
 
 #endif

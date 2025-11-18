@@ -89,7 +89,16 @@ void ConsoleUI::saveToFileInteraction() {
         filename = "passwords.dat";
     }
     
-    manager.saveToFile(filename);
+    // Проверяем доступ перед сохранением
+    if (!manager.canAccessFile(filename)) {
+        std::cout << "❌ Access denied! This file belongs to another master password." << std::endl;
+        std::cout << "💡 Tip: Use a different filename or switch to the correct master password." << std::endl;
+        return;
+    }
+    
+    if (manager.saveToFile(filename)) {
+        std::cout << "✅ Data saved successfully!" << std::endl;
+    }
 }
 
 void ConsoleUI::loadFromFileInteraction() {
@@ -100,9 +109,20 @@ void ConsoleUI::loadFromFileInteraction() {
         filename = "passwords.dat";
     }
     
-    manager.loadFromFile(filename);
+    // Сначала проверяем доступ
+    if (!manager.canAccessFile(filename)) {
+        std::cout << "❌ ACCESS DENIED! This file belongs to another master password." << std::endl;
+        std::cout << "💡 Use the correct master password or a different filename." << std::endl;
+        return;
+    }
+    
+    // Затем пытаемся загрузить
+    if (manager.loadFromFile(filename)) {
+        std::cout << "✅ Data loaded successfully!" << std::endl;
+    } else {
+        std::cout << "❌ Failed to load data from file." << std::endl;
+    }
 }
-
 void ConsoleUI::run() {
     std::cout << "Welcome to Password Manager!" << std::endl;
     

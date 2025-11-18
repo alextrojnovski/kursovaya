@@ -7,25 +7,46 @@
 #include <algorithm>
 #include <functional>
 
-// Простая реализация XOR шифрования для начала
+// Простая но эффективная хэш-функция
+std::string simpleHash(const std::string& input) {
+    // Константы для хэширования (простые числа)
+    const unsigned int prime1 = 16777619;
+    const unsigned int prime2 = 2166136261U;
+    
+    unsigned int hash = prime2;
+    
+    for (char c : input) {
+        hash ^= static_cast<unsigned char>(c);
+        hash *= prime1;
+    }
+    
+    // Конвертируем хэш в строку
+    std::string result;
+    for (int i = 0; i < 16; ++i) {
+        unsigned char byte = (hash >> (i * 2)) & 0xFF;
+        result += "0123456789ABCDEF"[byte / 16];
+        result += "0123456789ABCDEF"[byte % 16];
+    }
+    
+    return result;
+}
 
 std::string Crypto::encrypt(const std::string& plaintext, const SecureString& password) const {
     if (password.empty()) {
         throw std::invalid_argument("Password cannot be empty");
     }
     
-    // Используем хешированный пароль вместо прямого использования
+    // Генерируем соль и создаем настоящий ключ
     std::string salt = generateSalt();
-    std::string hashedPassword = hashPassword(password, salt);
+    std::string key = hashPassword(password, salt);
     
     std::string ciphertext = plaintext;
-    size_t password_len = hashedPassword.length();
+    size_t key_len = key.length();
     
     for (size_t i = 0; i < plaintext.length(); ++i) {
-        ciphertext[i] = plaintext[i] ^ hashedPassword[i % password_len];
+        ciphertext[i] = plaintext[i] ^ key[i % key_len];
     }
     
-    // Добавляем соль в начало зашифрованных данных
     return salt + ":" + ciphertext;
 }
 
@@ -34,22 +55,25 @@ std::string Crypto::decrypt(const std::string& ciphertext, const SecureString& p
         throw std::invalid_argument("Password cannot be empty");
     }
     
-    // Извлекаем соль и зашифрованные данные
     size_t separator_pos = ciphertext.find(':');
     if (separator_pos == std::string::npos) {
-        throw std::invalid_argument("Invalid ciphertext format");
+        throw std::invalid_argument("Invalid ciphertext format: no salt separator");
     }
     
     std::string salt = ciphertext.substr(0, separator_pos);
     std::string encrypted_data = ciphertext.substr(separator_pos + 1);
     
-    // Хешируем пароль с той же солью
-    std::string hashedPassword = hashPassword(password, salt);
-    size_t password_len = hashedPassword.length();
+    if (encrypted_data.empty()) {
+        throw std::invalid_argument("Invalid ciphertext: no encrypted data");
+    }
+    
+    // Создаем ключ для дешифровки
+    std::string key = hashPassword(password, salt);
+    size_t key_len = key.length();
     
     std::string plaintext = encrypted_data;
     for (size_t i = 0; i < encrypted_data.length(); ++i) {
-        plaintext[i] = encrypted_data[i] ^ hashedPassword[i % password_len];
+        plaintext[i] = encrypted_data[i] ^ key[i % key_len];
     }
     
     return plaintext;
@@ -60,7 +84,7 @@ std::string Crypto::generateSalt() const {
     const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     std::string salt;
     
-    for (int i = 0; i < 32; ++i) {  // Увеличиваем длину соли
+    for (int i = 0; i < 32; ++i) {
         salt += charset[std::rand() % charset.length()];
     }
     
@@ -72,43 +96,21 @@ std::string Crypto::hashPassword(const SecureString& password, const std::string
         throw std::invalid_argument("Password and salt cannot be empty");
     }
     
-    // Упрощенная реализация PBKDF2-like хеширования
+    // Используем настоящую хэш-функцию
     std::string input = password.toString() + salt;
-    std::string hashed = input;
     
-    // Многократное "хеширование" (1000 итераций)
-    for (int iteration = 0; iteration < 1000; ++iteration) {
-        std::string new_hashed = hashed;
-        
-        // Применяем XOR с различными комбинациями
-        for (size_t i = 0; i < hashed.length(); ++i) {
-            char c = hashed[i];
-            // Создаем сложную трансформацию
-            c = c ^ input[(i + iteration) % input.length()];
-            c = c ^ salt[i % salt.length()];
-            c = c ^ (char)(iteration % 256);
-            c = c ^ (char)(i % 256);
-            new_hashed[i] = c;
-        }
-        
-        hashed = new_hashed;
-        
-        // Добавляем "соль" в каждой итерации
-        if (iteration % 10 == 0) {
-            hashed = hashed + salt;
-        }
+    // Многократное хэширование для усиления безопасности
+    std::string hashed = simpleHash(input);
+    for (int i = 0; i < 100; ++i) {
+        hashed = simpleHash(hashed + salt);
     }
     
     return hashed;
 }
 
-std::string Crypto::deriveKeyFromPassword(const SecureString& password, const std::string& salt) const {
-    return hashPassword(password, salt);
-}
-
 bool Crypto::selfTest() const {
     try {
-        std::string test_text = "Hello, World! This is a test message.";
+        std::string test_text = "github\tuser@example.com\tpassword123\n";
         SecureString test_password("my_secret_password");
         
         std::string encrypted = encrypt(test_text, test_password);
@@ -117,19 +119,18 @@ bool Crypto::selfTest() const {
         if (test_text == decrypted) {
             std::cout << "Crypto self-test: PASSED" << std::endl;
             
-            // Дополнительный тест хеширования
+            // Тестируем что разные пароли дают РАЗНЫЕ хэши
             std::string salt = generateSalt();
-            std::string hash1 = hashPassword(test_password, salt);
-            std::string hash2 = hashPassword(test_password, salt);
+            std::string hash1 = hashPassword(SecureString("password1"), salt);
+            std::string hash2 = hashPassword(SecureString("password2"), salt);
             
-            if (hash1 == hash2) {
-                std::cout << "Hash consistency test: PASSED" << std::endl;
+            if (hash1 != hash2) {
+                std::cout << "Hash uniqueness test: PASSED" << std::endl;
+                return true;
             } else {
-                std::cout << "Hash consistency test: FAILED" << std::endl;
+                std::cout << "Hash uniqueness test: FAILED - same hash for different passwords!" << std::endl;
                 return false;
             }
-            
-            return true;
         } else {
             std::cout << "Crypto self-test: FAILED - decryption mismatch" << std::endl;
             return false;

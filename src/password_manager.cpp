@@ -105,6 +105,17 @@ bool PasswordManager::saveToFile(const std::string& filename) const {
         return false;
     }
     
+    // ПРОВЕРЯЕМ: если файл существует и НЕ принадлежит нам - ЗАПРЕЩАЕМ!
+    std::ifstream test_file(filename, std::ios::binary);
+    if (test_file.is_open()) {
+        test_file.close();
+        if (!canAccessFile(filename)) {
+            std::cerr << "Error: File '" << filename << "' belongs to another master password!" << std::endl;
+            std::cerr << "Cannot overwrite. Use a different filename or the correct master password." << std::endl;
+            return false;
+        }
+    }
+    
     std::string data = serializeEntries();
     std::string encryptedData = crypto.encrypt(data, masterPassword);
     
@@ -119,13 +130,19 @@ bool PasswordManager::saveToFile(const std::string& filename) const {
     std::cout << "Encrypted data saved to '" << filename << "' successfully." << std::endl;
     return true;
 }
-
 bool PasswordManager::loadFromFile(const std::string& filename) {
     if (!isMasterPasswordSet()) {
         std::cerr << "Error: Master password not set! Cannot decrypt data." << std::endl;
         return false;
     }
     
+    std::cout << "DEBUG: Checking file access for: " << filename << std::endl;
+    if (!canAccessFile(filename)) {
+        std::cerr << "Error: File '" << filename << "' belongs to another master password!" << std::endl;
+        return false;
+    }
+    
+    std::cout << "DEBUG: Access granted, loading file..." << std::endl;
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Error: Could not open file '" << filename << "' for reading." << std::endl;
@@ -151,7 +168,42 @@ size_t PasswordManager::getEntryCount() const {
     return entries.size();
 }
 
-void PasswordManager::clearAllEntries() {
-    entries.clear();
-    std::cout << "All entries cleared." << std::endl;
+bool PasswordManager::canAccessFile(const std::string& filename) const {
+    if (!isMasterPasswordSet()) {
+        return false;
+    }
+    
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        return true; // Файл не существует - можно создать
+    }
+    
+    file.seekg(0, std::ios::end);
+    size_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    if (file_size == 0) {
+        return true; // Файл пустой - можно использовать
+    }
+    
+    std::string encryptedData((std::istreambuf_iterator<char>(file)), 
+                             std::istreambuf_iterator<char>());
+    file.close();
+    
+    try {
+        std::string decryptedData = crypto.decrypt(encryptedData, masterPassword);
+        
+        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: пробуем десериализовать данные
+        // Если данные не содержат ожидаемого формата - считаем файл чужим
+        if (decryptedData.empty()) {
+            return false;
+        }
+        
+        // Проверяем что расшифрованные данные содержат табы (наш формат)
+        return decryptedData.find('\t') != std::string::npos;
+        
+    } catch (const std::exception& e) {
+        // Любая ошибка при дешифровке - файл не наш
+        return false;
+    }
 }
