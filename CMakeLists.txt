@@ -24,6 +24,7 @@ add_executable(PasswordManager
     src/password_manager.cpp
     src/console_ui.cpp
     src/crypto.cpp
+    src/secure_string.cpp  # Добавляем новый файл
 )
 
 # Пока не линкуем с crypto++ - используем нашу простую реализацию

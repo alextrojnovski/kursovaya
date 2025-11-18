@@ -5,25 +5,23 @@
 #include <cstdlib>
 #include <ctime>
 
-// Простая реализация XOR шифрования для начала
-
-std::string Crypto::encrypt(const std::string& plaintext, const std::string& password) const {
+std::string Crypto::encrypt(const std::string& plaintext, const SecureString& password) const {
     if (password.empty()) {
         throw std::invalid_argument("Password cannot be empty");
     }
     
     std::string ciphertext = plaintext;
+    const char* password_data = password.c_str();
     size_t password_len = password.length();
     
     for (size_t i = 0; i < plaintext.length(); ++i) {
-        ciphertext[i] = plaintext[i] ^ password[i % password_len];
+        ciphertext[i] = plaintext[i] ^ password_data[i % password_len];
     }
     
     return ciphertext;
 }
 
-std::string Crypto::decrypt(const std::string& ciphertext, const std::string& password) const {
-    // XOR шифрование симметрично - шифрование и дешифрование одинаковы
+std::string Crypto::decrypt(const std::string& ciphertext, const SecureString& password) const {
     return encrypt(ciphertext, password);
 }
 
@@ -39,16 +37,15 @@ std::string Crypto::generateSalt() const {
     return salt;
 }
 
-std::string Crypto::deriveKeyFromPassword(const std::string& password, const std::string& salt) const {
-    // Простая производная ключа - соединяем пароль и соль
-    // В реальном приложении здесь должен быть PBKDF2 или аналогичный алгоритм
-    return password + salt;
+std::string Crypto::deriveKeyFromPassword(const SecureString& password, const std::string& salt) const {
+    // Пока простая реализация - позже добавим PBKDF2
+    return password.toString() + salt;
 }
 
 bool Crypto::selfTest() const {
     try {
         std::string test_text = "Hello, World! This is a test message.";
-        std::string test_password = "my_secret_password";
+        SecureString test_password("my_secret_password");
         
         std::string encrypted = encrypt(test_text, test_password);
         std::string decrypted = decrypt(encrypted, test_password);

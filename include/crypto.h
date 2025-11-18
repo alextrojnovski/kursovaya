@@ -3,17 +3,18 @@
 
 #include <string>
 #include <vector>
+#include "secure_string.h"
 
 class Crypto {
 private:
-    std::string deriveKeyFromPassword(const std::string& password, const std::string& salt) const;
+    std::string deriveKeyFromPassword(const SecureString& password, const std::string& salt) const;
     
 public:
     // Шифрование строки
-    std::string encrypt(const std::string& plaintext, const std::string& password) const;
+    std::string encrypt(const std::string& plaintext, const SecureString& password) const;
     
     // Дешифрование строки
-    std::string decrypt(const std::string& ciphertext, const std::string& password) const;
+    std::string decrypt(const std::string& ciphertext, const SecureString& password) const;
     
     // Генерация соли
     std::string generateSalt() const;
