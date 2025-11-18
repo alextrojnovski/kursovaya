@@ -17,7 +17,8 @@ include_directories(include)
 add_executable(PasswordManager
     src/main.cpp
     src/password_entry.cpp
-    src/password_manager.cpp  # Добавляем новый файл
+    src/password_manager.cpp
+    src/console_ui.cpp  # Добавляем новый файл
 )
 # Для будущих зависимостей (шифрование, тестирование)
 # find_package() добавим позже
