@@ -5,12 +5,13 @@
 #include <string>
 #include "password_entry.h"
 #include "crypto.h"
+#include "secure_string.h"  // Добавляем
 
 class PasswordManager {
 private:
     std::vector<PasswordEntry> entries;
-    Crypto crypto;
-    std::string masterPassword;
+    mutable Crypto crypto;
+    SecureString masterPassword;  // Меняем на SecureString
     
     // Вспомогательные методы для работы с зашифрованными данными
     std::string serializeEntries() const;
@@ -18,7 +19,7 @@ private:
     
 public:
     // Устанавливаем мастер-пароль
-    void setMasterPassword(const std::string& password);
+    void setMasterPassword(const SecureString& password);  // Обновляем сигнатуру
     
     // Основные методы управления паролями
     void addEntry(const PasswordEntry& entry);

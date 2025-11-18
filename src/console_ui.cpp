@@ -34,10 +34,10 @@ bool ConsoleUI::setupMasterPassword() {
         return false;
     }
     
-    manager.setMasterPassword(password);
+    SecureString securePassword(password);  // Создаем SecureString из std::string
+    manager.setMasterPassword(securePassword);
     return true;
 }
-
 void ConsoleUI::addPasswordInteraction() {
     std::cout << "\n--- Add New Password ---" << std::endl;
     

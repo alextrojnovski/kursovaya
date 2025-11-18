@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <sstream>
 
-void PasswordManager::setMasterPassword(const std::string& password) {
+void PasswordManager::setMasterPassword(const SecureString& password) {
     if (!password.empty()) {
         masterPassword = password;
         std::cout << "Master password set successfully." << std::endl;
