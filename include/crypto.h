@@ -6,20 +6,20 @@
 
 class Crypto {
 private:
-    std::string deriveKeyFromPassword(const std::string& password, const std::string& salt);
+    std::string deriveKeyFromPassword(const std::string& password, const std::string& salt) const;
     
 public:
     // Шифрование строки
-    std::string encrypt(const std::string& plaintext, const std::string& password);
+    std::string encrypt(const std::string& plaintext, const std::string& password) const;
     
     // Дешифрование строки
-    std::string decrypt(const std::string& ciphertext, const std::string& password);
+    std::string decrypt(const std::string& ciphertext, const std::string& password) const;
     
     // Генерация соли
-    std::string generateSalt();
+    std::string generateSalt() const;
     
     // Простая проверка работы шифрования (для тестов)
-    bool selfTest();
+    bool selfTest() const;
 };
 
 #endif

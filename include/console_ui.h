@@ -8,6 +8,7 @@ private:
     PasswordManager manager;
     
     // Вспомогательные методы
+    
     void displayMenu() const;
     void addPasswordInteraction();
     void findPasswordInteraction();
@@ -16,7 +17,7 @@ private:
     void saveToFileInteraction();
     void loadFromFileInteraction();
     std::string getInput(const std::string& prompt);
-
+    bool setupMasterPassword();
 public:
     void run();  // Главный метод - запуск интерфейса
 };

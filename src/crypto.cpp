@@ -6,9 +6,8 @@
 #include <ctime>
 
 // Простая реализация XOR шифрования для начала
-// Позже заменим на более надежное шифрование
 
-std::string Crypto::encrypt(const std::string& plaintext, const std::string& password) {
+std::string Crypto::encrypt(const std::string& plaintext, const std::string& password) const {
     if (password.empty()) {
         throw std::invalid_argument("Password cannot be empty");
     }
@@ -23,12 +22,12 @@ std::string Crypto::encrypt(const std::string& plaintext, const std::string& pas
     return ciphertext;
 }
 
-std::string Crypto::decrypt(const std::string& ciphertext, const std::string& password) {
+std::string Crypto::decrypt(const std::string& ciphertext, const std::string& password) const {
     // XOR шифрование симметрично - шифрование и дешифрование одинаковы
     return encrypt(ciphertext, password);
 }
 
-std::string Crypto::generateSalt() {
+std::string Crypto::generateSalt() const {
     std::srand(std::time(nullptr));
     const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     std::string salt;
@@ -40,13 +39,13 @@ std::string Crypto::generateSalt() {
     return salt;
 }
 
-std::string Crypto::deriveKeyFromPassword(const std::string& password, const std::string& salt) {
+std::string Crypto::deriveKeyFromPassword(const std::string& password, const std::string& salt) const {
     // Простая производная ключа - соединяем пароль и соль
     // В реальном приложении здесь должен быть PBKDF2 или аналогичный алгоритм
     return password + salt;
 }
 
-bool Crypto::selfTest() {
+bool Crypto::selfTest() const {
     try {
         std::string test_text = "Hello, World! This is a test message.";
         std::string test_password = "my_secret_password";

@@ -1,3 +1,4 @@
+
 #include "console_ui.h"
 #include <iostream>
 #include <limits>
@@ -19,6 +20,22 @@ std::string ConsoleUI::getInput(const std::string& prompt) {
     std::cout << prompt;
     std::getline(std::cin, input);
     return input;
+}
+
+bool ConsoleUI::setupMasterPassword() {
+    std::cout << "\n=== Master Password Setup ===" << std::endl;
+    std::cout << "Set a master password to encrypt your data: ";
+    
+    std::string password;
+    std::getline(std::cin, password);
+    
+    if (password.empty()) {
+        std::cout << "Error: Master password cannot be empty!" << std::endl;
+        return false;
+    }
+    
+    manager.setMasterPassword(password);
+    return true;
 }
 
 void ConsoleUI::addPasswordInteraction() {
@@ -44,7 +61,9 @@ void ConsoleUI::findPasswordInteraction() {
     
     if (found) {
         std::cout << "Found entry: ";
-        found->print();
+        std::cout << "Service: " << found->getServiceName() 
+                  << ", Login: " << found->getLogin() 
+                  << ", Password: " << found->getPassword() << std::endl;
     } else {
         std::cout << "Entry not found for service: " << service << std::endl;
     }
@@ -65,9 +84,9 @@ void ConsoleUI::listAllPasswordsInteraction() {
 void ConsoleUI::saveToFileInteraction() {
     std::cout << "\n--- Save to File ---" << std::endl;
     
-    std::string filename = getInput("Enter filename (default: passwords.csv): ");
+    std::string filename = getInput("Enter filename (default: passwords.dat): ");
     if (filename.empty()) {
-        filename = "passwords.csv";
+        filename = "passwords.dat";
     }
     
     manager.saveToFile(filename);
@@ -76,9 +95,9 @@ void ConsoleUI::saveToFileInteraction() {
 void ConsoleUI::loadFromFileInteraction() {
     std::cout << "\n--- Load from File ---" << std::endl;
     
-    std::string filename = getInput("Enter filename (default: passwords.csv): ");
+    std::string filename = getInput("Enter filename (default: passwords.dat): ");
     if (filename.empty()) {
-        filename = "passwords.csv";
+        filename = "passwords.dat";
     }
     
     manager.loadFromFile(filename);
@@ -86,6 +105,12 @@ void ConsoleUI::loadFromFileInteraction() {
 
 void ConsoleUI::run() {
     std::cout << "Welcome to Password Manager!" << std::endl;
+    
+    // Запрашиваем мастер-пароль при запуске
+    if (!setupMasterPassword()) {
+        std::cout << "Failed to set master password. Exiting." << std::endl;
+        return;
+    }
     
     bool running = true;
     while (running) {
