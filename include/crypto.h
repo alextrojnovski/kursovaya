@@ -19,6 +19,9 @@ public:
     // Генерация соли
     std::string generateSalt() const;
     
+    // Хеширование пароля
+    std::string hashPassword(const SecureString& password, const std::string& salt) const;
+    
     // Простая проверка работы шифрования (для тестов)
     bool selfTest() const;
 };
